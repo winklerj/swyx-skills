@@ -1,6 +1,6 @@
 ---
 name: media-transform
-description: Generic media transformation orchestrator — download videos from any source (X/Twitter, Zoom, YouTube, web embeds), upload to YouTube, transcribe with timestamps, generate chapters, and add thumbnails. Use when the user wants to move a video from one platform to another, or asks to "download and upload this video to YouTube", "publish this recording", "save and transcribe this", or any video pipeline task that chains multiple steps. Encodes preferences and learned best practices for each stage.
+description: Generic media transformation orchestrator — download videos from any source (X/Twitter, Zoom, YouTube, web embeds), upload to YouTube, transcribe with timestamps, generate chapters, create thumbnails with GPT-Image-2, and A/B test titles. Use when the user wants to move a video from one platform to another, or asks to "download and upload this video to YouTube", "publish this recording", "save and transcribe this", or any video pipeline task. Encodes learned best practices and preferences for each stage.
 ---
 
 # Media Transform
@@ -25,19 +25,19 @@ Each pipeline stage is handled by a dedicated atomic skill. This orchestrator pr
 | Download (web embeds) | `download-video` | Handles Vimeo, YouTube embeds, referer headers |
 | Download (generic URL) | `yt-dlp` directly | `brew install yt-dlp` |
 | Upload to YouTube | `youtube-api` | OAuth, resumable upload, tags, metadata |
+| Update metadata | `youtube-api` | `update_metadata.py` — title, description, tags |
+| Set thumbnail | `youtube-api` | `set_thumbnail.py` — upload custom thumbnail |
 | Transcribe | `transcribe-anything` | Multi-backend, auto-selects best |
 | Chapters (LLM titles) | `podcast-publishing-assistant` | High-quality chapter summaries |
-| Thumbnails | `youtube-thumbnails` | Generate + upload |
 
 ## Pipelines
 
 ### Pipeline A: X/Twitter → YouTube + Chapters
 
 ```
-download-x-video → youtube-api → transcribe-anything → (update description)
+download-x-video → youtube-api (upload) → transcribe-anything → youtube-api (update description)
 ```
 
-Command sequence:
 ```bash
 # 1. Download
 python3 download-x-video/scripts/download_x_video.py "https://x.com/user/status/123/video/1" /tmp
@@ -61,28 +61,105 @@ mlx_whisper /tmp/x_video_<id>.mp4 \
 ### Pipeline B: Zoom → YouTube + Thumbnails
 
 ```
-zoom-download → youtube-api → youtube-thumbnails
+zoom-download → youtube-api (upload + metadata + thumbnail)
 ```
 
-Unlike Pipeline A, Zoom recordings typically don't need transcription (they have built-in transcripts). Focus is on proper titling, playlist assignment, and thumbnails.
+Zoom recordings typically have built-in transcripts. Focus on proper titling, playlist assignment, and thumbnails.
 
 ### Pipeline C: Generic Video → YouTube + Transcription
 
 ```
-yt-dlp download → youtube-api → transcribe-anything
+yt-dlp download → youtube-api (upload) → transcribe-anything
 ```
 
 For any video URL that yt-dlp supports (YouTube, Vimeo, etc.), download and re-publish.
 
+## Title Generation
+
+Generate 3-5 title candidates using the LLM. Evaluate against these heuristics:
+
+**What makes a good YouTube title:**
+- **Curiosity gap**: Implies something the viewer doesn't know yet
+- **Specificity**: Names, numbers, concrete claims beat vague ones
+- **Pattern interrupt**: Unexpected framing or contradiction
+- **Under 70 chars**: Avoids truncation in search results
+- **Front-load keywords**: Most important words first
+- **No clickbait**: Title must match content (retention matters more than CTR)
+
+**Title generation prompt template:**
+```
+Generate 5 YouTube title candidates for a video about [topic].
+The video is [duration] and [brief content description].
+
+Requirements:
+- Under 70 characters each
+- Different angles: (1) curiosity-driven, (2) how-to/value, (3) controversial/contrarian,
+  (4) specific/numbers-driven, (5) question-based
+- No ALL CAPS, no emoji overuse
+- Titles must accurately reflect the content
+```
+
+### A/B Testing Titles
+
+YouTube Studio has native "Test & Compare" (tests up to 3 titles/thumbnails, runs up to 2 weeks, winner based on watch time share). This is NOT available via the YouTube Data API directly.
+
+**Programmatic DIY A/B testing:**
+
+Use `youtube-api/scripts/update_metadata.py` to rotate titles on a schedule, then analyze performance via YouTube Analytics:
+
+```bash
+# Start test: set title A
+python3 youtube-api/scripts/update_metadata.py --video-id <ID> --title "Title A"
+
+# After 24-48h: rotate to title B
+python3 youtube-api/scripts/update_metadata.py --video-id <ID> --title "Title B"
+
+# After 24-48h more: check analytics to determine winner
+# Winner = higher CTR * average view duration (or just CTR for early tests)
+```
+
+**A/B testing schedule:**
+- Rotate every 24-48 hours (YouTube needs time to collect impressions)
+- Test 2-3 titles per video
+- Run for 1-2 weeks total
+- Winner based on: CTR (click-through rate) × retention, not just view count
+
+## Thumbnail Generation
+
+### GPT-Image-2 (Recommended)
+
+GPT-Image-2 (`openai/gpt-image-2`) via the `image_generate` tool is the preferred thumbnail generator:
+
+**Key capabilities relevant to thumbnails:**
+- **Near-perfect text rendering**: Can include readable text on thumbnails (previously impossible with AI)
+- **Thinking mode**: Plans composition before rendering — ensures faces, text, and layout are coherent
+- **Up to 2K resolution**: 2048px, perfect for 1280×720 thumbs with room to crop
+- **Aspect ratio 16:9**: Native YouTube thumbnail ratio
+- **Multilingual text**: Works across scripts (Latin, CJK, etc.)
+- **Multi-variant generation**: Up to 4-8 coherent variations from one prompt
+
+**Thumbnail prompt template:**
+```
+YouTube thumbnail for a video titled "[TITLE]". Style: [clean/bold/minimalist/tech].
+[Specific visual elements: faces, diagrams, text overlays].
+Aspect ratio: 16:9. High contrast, eye-catching. No clutter. 
+Text on image (if any): "[KEY PHRASE]" in [position].
+```
+
+**Post-generation:**
+- Use `youtube-api/scripts/set_thumbnail.py` to upload
+- Compress if >2MB: `convert -resize 1280x720 -quality 85 input.png output.jpg`
+
+### Thumbnail A/B Testing
+
+YouTube's native "Test & Compare" supports up to 3 thumbnails. Generate 3 distinct concepts:
+1. **Text-heavy**: Key phrase or number in large font
+2. **Face/emotion**: Expressive reaction, eye contact
+3. **Concept/abstract**: Visual metaphor for the topic
+
 ## Stage-by-Stage Preferences & Learnings
 
 ### Download
-
-**mlx_whisper is 10x faster on Apple Silicon:**
-- `mlx_whisper` (`pipx install mlx-whisper`): ~1300 frames/s → ~2 min for 27 min audio
-- `openai-whisper` CLI: ~95 frames/s → ~28 min for same audio
-- Always prefer `mlx_whisper` on M-series Macs
-- `openai-whisper` with `--device mps` produces NaN errors with turbo/large models — avoid
 
 **yt-dlp path detection:**
 - Use `--print after_move:filepath` for reliable final path (don't parse stdout for `[download] Destination`)
@@ -106,15 +183,13 @@ For any video URL that yt-dlp supports (YouTube, Vimeo, etc.), download and re-p
 
 ### Transcription
 
-**Prefer mlx_whisper on Apple Silicon:**
-```bash
-mlx_whisper <file> --model mlx-community/whisper-turbo --output-format json --word-timestamps True
-```
-
-Falls back to openai-whisper CLI. `transcribe-anything` skill auto-selects best backend.
+**Prefer mlx_whisper on Apple Silicon (10x faster):**
+- `mlx_whisper` (`pipx install mlx-whisper`): ~1300 frames/s → ~2 min for 27 min audio
+- `openai-whisper` CLI: ~95 frames/s → ~28 min for same audio
+- `openai-whisper` with `--device mps` produces NaN errors with turbo/large models — **avoid**, use mlx_whisper instead
 
 **Turbo model is the sweet spot:**
-- Fast enough for real-time use (~2 min for 27 min audio)
+- Fast enough for real-time use
 - Quality nearly as good as large
 - Small is too inaccurate for chapter generation
 
@@ -145,21 +220,17 @@ Falls back to openai-whisper CLI. `transcribe-anything` skill auto-selects best 
 - 60s gives ~27 chapters — cleaner but less granular
 - 10s is too granular for YouTube (chapter limit is ~100)
 
-### Thumbnails
-
-- Gemini Pro with image generation enabled
-- Compress to <2MB: `convert -resize 1280x720 -quality 85`
-- Upload via `youtube-api/scripts/set_thumbnail.py`
-
 ## Checkpoint Pattern
 
 Before each action phase, present a summary and get confirmation. This catches mismatches early:
 
 1. **Pre-flight**: Scan source (tweet, Zoom recordings, etc.) → list what's available
-2. **Download complete**: Confirm file, title, duration
-3. **Upload complete**: Confirm URL, privacy, playlist
-4. **Transcription complete**: Confirm segment count, quality
-5. **Final**: Present all results
+2. **Title check**: Present 3-5 title candidates, user picks
+3. **Thumbnail check**: Generate 3 thumbnail variants, user picks
+4. **Download complete**: Confirm file, title, duration
+5. **Upload complete**: Confirm URL, privacy, playlist
+6. **Transcription complete**: Confirm segment count, quality
+7. **Final**: Present all results, offer title A/B test setup
 
 ## Troubleshooting
 
@@ -179,3 +250,7 @@ gcloud services enable youtube.googleapis.com --project=<PROJECT_ID>
 - Raw transcript chapters work for quick navigation but look unprofessional
 - For publication-quality, use `podcast-publishing-assistant` or LLM post-processing
 - Garbage filtering catches most bad chapters but may miss edge cases ("I mean", "you know")
+
+### Thumbnail too large
+- YouTube max is 2MB. Compress: `convert -resize 1280x720 -quality 85 input.png output.jpg`
+- GPT-Image-2 outputs may need compression for multi-variant uploads
