@@ -1,114 +1,120 @@
 ---
 name: x-to-youtube
-description: Download X/Twitter videos, upload to YouTube as unlisted, transcribe with word-level timestamps, and add chapter markers. Use when the user wants to save a Twitter/X video to YouTube, or asks to "download and upload this X video to YouTube", or wants transcription + chapters from a Twitter video. Supports optional speaker diarization via whisperX.
+description: Full pipeline — download X/Twitter videos, upload to YouTube as unlisted, transcribe with timestamps, add chapter markers. Orchestrator skill that chains download-x-video → youtube-api → transcribe-anything. Use when the user wants to save an X/Twitter video to YouTube with transcription and chapters, or asks to "download and upload this X video to YouTube with chapters".
 ---
 
 # X → YouTube Pipeline
 
-End-to-end: Twitter/X video → YouTube unlisted → transcription with timestamps → chapter markers.
+Orchestrator that chains atomic skills into an end-to-end pipeline. Each stage is handled by a focused sub-skill that can also be used independently.
 
-This is an **orchestrator skill** — it delegates to other skills where they overlap, keeping only what's unique (X/Twitter-specific download + garbage-filtered chapter generation).
+## Atomic Skills Used
 
-## Quick Start
+| Stage | Skill | What It Does |
+|-------|-------|-------------|
+| Download | `download-x-video` | yt-dlp from X/Twitter |
+| Upload | `youtube-api` | YouTube Data API v3 upload |
+| Transcribe | `transcribe-anything` | Whisper/mlx_whisper with timestamps |
+| Chapters | `podcast-publishing-assistant` | LLM-based chapter titling |
 
+## Pipeline
+
+### Step 1: Download from X
+
+Use `download-x-video`:
 ```bash
-python3 scripts/x_to_youtube.py "https://x.com/user/status/123/video/1" \
-    --title "My Video"
+python3 download-x-video/scripts/download_x_video.py "https://x.com/user/status/123/video/1" /tmp
 ```
 
-Skip upload (download + transcribe only):
+### Step 2: Upload to YouTube
+
+Use `youtube-api`. First-time setup:
+- The skill needs a `client_secret.json` in its config directory
+- On first run, a browser opens for Google OAuth consent
+- Token is cached for subsequent runs
 
 ```bash
-python3 scripts/x_to_youtube.py "https://x.com/user/status/123/video/1" \
-    --no-upload --chapter-interval 60
+python3 youtube-api/scripts/upload_video.py \
+    --file /tmp/x_video_<tweet_id>.mp4 \
+    --title "Video Title" \
+    --privacy unlisted
 ```
 
-## Prerequisites
+If `youtube-api` is not installed, the inline upload fallback uses `~/.config/gws/client_secret.json`.
 
-- **yt-dlp**: `brew install yt-dlp`
-- **mlx_whisper** (recommended, Apple Silicon): `pipx install mlx-whisper`
-- **openai-whisper** (fallback): `pipx install openai-whisper`
-- **YouTube Data API v3**: Must be enabled in your GCP project
-- **Google OAuth for YouTube**: First upload opens browser for consent; token cached
+### Step 3: Transcribe
 
-### Optional
-
-- **whisperX**: For speaker diarization (`--diarize`). `pip install whisperx`
-- **youtube-api skill**: For richer YouTube upload features (tags, auto-title, Cowork support). Falls back to inline upload if not present.
-
-## Delegation Map
-
-This skill delegates to existing skills to avoid duplication:
-
-| Stage | Delegates To | Why |
-|-------|-------------|-----|
-| Upload to YouTube | `youtube-api` | Better auth detection, tags, MIME handling, Cowork support |
-| Transcription | `transcribe-anything` (conceptually) | More backends, silence detection, API support |
-| Download from X | **this skill** | X/Twitter-specific URL handling, yt-dlp `--print after_move` |
-| Chapter generation | **this skill** | Unique: garbage filtering, word-boundary truncation |
-
-If `youtube-api` is not installed alongside this skill, the orchestrator falls back to an inline upload implementation.
-
-## Scripts
-
-### `x_to_youtube.py` — Full Pipeline
-
-Orchestrates all 4 steps. Options:
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--title`, `-t` | derived from URL | Video title |
-| `--privacy`, `-p` | `unlisted` | YouTube privacy: unlisted, private, public |
-| `--diarize`, `-d` | off | Enable speaker diarization (requires whisperX) |
-| `--no-upload` | off | Skip YouTube upload |
-| `--whisper-model` | `turbo` | Model: tiny, base, small, medium, large, turbo |
-| `--chapter-interval` | `30` | Seconds between chapter markers |
-
-### `download_x_video.py` — Download Only
-
+Use `transcribe-anything`. On Apple Silicon, prefer mlx_whisper (10x faster):
 ```bash
-python3 scripts/download_x_video.py "https://x.com/user/status/123/video/1"
+mlx_whisper /tmp/x_video_<tweet_id>.mp4 \
+    --model mlx-community/whisper-turbo \
+    --output-dir /tmp \
+    --output-format json \
+    --word-timestamps True
 ```
 
-## Workflow
+Or use the `transcribe-anything` skill which auto-selects the best backend.
 
-1. **Download**: yt-dlp fetches from X/Twitter, uses `--print after_move:filepath` for path
-2. **Upload**: Delegates to `youtube-api` skill (or inline fallback) — resumable upload, unlisted default
-3. **Transcribe**: mlx_whisper (preferred, 10x faster on Apple Silicon) or whisper CLI
-4. **Chapters**: Segments grouped into ~30s chunks, garbage-filtered, word-boundary truncated
+### Step 4: Generate Chapters
 
-## Performance
+Extract segments from the transcription JSON and format as YouTube chapters. For best results, use `podcast-publishing-assistant` which generates LLM-summarized chapter titles.
 
-- **Apple Silicon (M-series)**: mlx_whisper `turbo` ≈ 1300 frames/s → ~2 min for 27 min audio
-- **CPU (openai-whisper)**: ≈ 95 frames/s → ~28 min for same audio
-- Always prefer mlx_whisper on Apple Silicon
+Quick inline chapter generation:
+```python
+import json
+with open("/tmp/transcript.json") as f:
+    segments = json.load(f)["segments"]
 
-## Chapter Quality
+chapters = []
+chunk_start = 0
+chunk_texts = []
+for seg in segments:
+    if seg["start"] - chunk_start >= 30 and chunk_texts:
+        title = " ".join(chunk_texts)[:60]
+        chapters.append(f"{int(chunk_start//60)}:{int(chunk_start%60):02d} {title}")
+        chunk_start = seg["start"]
+        chunk_texts = [seg["text"].strip()]
+    else:
+        chunk_texts.append(seg["text"].strip())
 
-Chapters are raw transcript text (not LLM-summarized):
-- **Good**: Accurate timestamps, reflects actual content
-- **Mediocre**: Titles can be rambling transcript fragments
-- **Garbage filtered**: Pure filler ("Yeah.", "Cool.") chapters removed, word-boundary truncation
+print("\n".join(chapters))
+```
 
-For professional-quality titles, post-process with an LLM. The `podcast-publishing-assistant` skill has LLM-based chapter titling.
+### Step 5: Update YouTube Description
+
+Use `youtube-api` to update the video description with chapters:
+```bash
+python3 youtube-api/scripts/update_metadata.py \
+    --video-id <ID> \
+    --description "Chapters:\n00:00 Intro\n..."
+```
+
+## Performance (Apple Silicon)
+
+- **Download**: ~30s-2min depending on video length
+- **Upload**: ~2-5min for 100MB, resumable
+- **Transcribe (mlx_whisper turbo)**: ~2min for 27min video
+- **Transcribe (CPU whisper)**: ~28min for 27min video
+
+Always prefer `mlx_whisper` on M-series Macs.
 
 ## Troubleshooting
 
-### YouTube API accessNotConfigured
-
+### YouTube API not enabled
 ```bash
 gcloud services enable youtube.googleapis.com --project=<PROJECT_ID>
 ```
 
-### OAuth redirect fails (ERR_CONNECTION_REFUSED)
-
+### OAuth redirect fails
 - Ensure port 8080 is free: `lsof -i :8080`
-- The GCP OAuth client must have `http://localhost` in redirect URIs
+- GCP OAuth must have `http://localhost` in redirect URIs
 
-### mlx_whisper "Failed to load audio"
+### mlx_whisper not found
+```bash
+pipx install mlx-whisper
+```
 
-Ensure ffmpeg: `brew install ffmpeg`
-
-### youtube-api skill not found
-
-The pipeline falls back to inline upload using `~/.config/gws/client_secret.json`. Install the `youtube-api` skill alongside this one for better features.
+### X/Twitter download fails
+Twitter may require authentication for some videos:
+```bash
+yt-dlp --cookies-from-browser chrome "https://x.com/..."
+```
