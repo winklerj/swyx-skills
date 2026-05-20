@@ -52,6 +52,19 @@ else
 fi
 
 # =============================================================================
+# ANTIGRAVITY CLI — Google agent CLI replacing Gemini CLI for consumers
+# =============================================================================
+echo ""
+echo "📦 Checking Antigravity CLI..."
+if command -v agy &>/dev/null; then
+    echo "   ✅ Antigravity CLI already installed"
+elif brew list --cask antigravity &>/dev/null; then
+    echo "   ✅ Antigravity app installed; open a new shell if agy is not on PATH yet"
+else
+    brew install --cask antigravity 2>/dev/null || echo "   ⚠️  Antigravity install failed (try: brew install --cask antigravity)"
+fi
+
+# =============================================================================
 # PEON-PING — Shared agent notifications for Claude Code, Codex, Cursor
 # =============================================================================
 echo ""
@@ -195,6 +208,7 @@ echo "💡 Useful commands:"
 echo "   ollama run llama3.2              # Chat with Llama"
 echo "   ollama run qwen2.5-coder:14b     # Code with Qwen"
 echo "   claude                            # Start Claude Code"
+echo "   agy                               # Start Antigravity CLI"
 echo "   peon status                       # Check agent notification status"
 echo "   peon toggle                       # Toggle peon-ping mute"
 echo "   llama-server -hf ggml-org/Qwen2.5-Coder-3B-Q8_0-GGUF --port 8012 -ngl 99"

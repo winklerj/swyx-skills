@@ -8,7 +8,7 @@ compatibility: |
 metadata:
   author: swyxio
   version: "2.0"
-  last-updated: "2026-03-26"
+  last-updated: "2026-05-20"
   hardware: Apple Silicon (M-series)
   primary-stack: TypeScript, Python, AI/ML
 ---
@@ -29,7 +29,7 @@ The setup is opinionated. The core opinions:
 - **Python**: uv from Astral (not pyenv, not pip, not conda — uv is dramatically faster and handles both venvs and package installs)
 - **Docker**: Colima (not Docker Desktop — lighter weight, CLI-native, free)
 - **Editor**: Cursor (AI-native editor)
-- **AI tools**: Claude Code, Codex CLI, Railway CLI, Ollama for local models
+- **AI tools**: Claude Code, Codex CLI, Antigravity CLI (`agy` via the `antigravity` Homebrew cask), Railway CLI, Ollama for local models
 - **Agent notifications**: peon-ping shared across Claude Code, Codex, and Cursor, tuned to notify only when useful
 - **Browser**: Dia (from The Browser Company, successor to Arc)
 - **Launcher**: Raycast (replaces Alfred, Spotlight, Caffeine, window management)
@@ -65,7 +65,7 @@ The scripts should run in this order:
 02-shell-setup.sh          # Oh-My-ZSH + plugins + fonts
 03-brew-packages.sh        # All brew formulae + cask apps
 04-dev-environment.sh      # Node (fnm), Python (uv), Git, Docker
-05-ai-tools.sh             # Claude Code, Codex CLI, Ollama models, llama.cpp
+05-ai-tools.sh             # Claude Code, Codex CLI, Antigravity CLI, Ollama models, llama.cpp
 06-dotfiles.sh             # .zshrc + Ghostty config
 07-macos-settings.sh       # System preferences via defaults commands
 00-run-all.sh              # Master runner (runs 01-07 in order)
@@ -125,7 +125,10 @@ openssl@3, readline, sqlite, xz, zstd
 postgresql@14, rabbitmq
 
 # Misc CLI
-honcho, pipx, flyctl, entr, tig, mas, terminal-notifier
+honcho, pipx, flyctl, entr, tig, mas, terminal-notifier, googleworkspace-cli
+
+# Google Workspace
+googleworkspace-cli installs the `gws` binary; auth still requires `gws auth setup` and `gws auth login`.
 
 # Libraries
 cairo, glib, harfbuzz, libvmaf, webp
@@ -150,19 +153,21 @@ slack, discord, zoom
 raycast, rectangle, obsidian, notion, notion-calendar
 
 # AI & ML
-ollama
+ollama, antigravity
 
 # Media
-vlc, audacity, loom, descript
+vlc, audacity, tella, descript
 
 # Utilities
 shottr, notunes, caffeine, stretchly, quickshade, pure-paste, 1password
 
 # Dev tools
-beeper, superhuman
+beeper, superhuman, gcloud-cli
 ```
 
 Plus cmux via: `brew tap manaflow-ai/cmux && brew install --cask cmux`
+
+`gcloud-cli` installs Google Cloud CLI (`gcloud`). Keep `/opt/homebrew/share/google-cloud-sdk/bin` on PATH so additional SDK components are available after install.
 
 ## Claude-Suggested Additions (March 2026)
 
@@ -180,6 +185,16 @@ These tools were suggested by Claude during the initial setup session and accept
 undollar, npm-check-updates, trash-cli,
 @anthropic-ai/claude-code, @openai/codex, @railway/cli
 ```
+
+### Antigravity CLI
+
+Install Google Antigravity through Homebrew:
+
+```bash
+brew install --cask antigravity
+```
+
+The cask installs the desktop app and exposes `agy` as the Antigravity CLI. Prefer this over Gemini CLI for new setups: Google announced on May 19, 2026 that consumer Gemini CLI access for free, Google AI Pro, and Ultra users stops serving requests on June 18, 2026. Enterprise and paid API-key Gemini CLI access can remain available, but this new-Mac path should default to Antigravity CLI.
 
 ### peon-ping Defaults
 
@@ -248,6 +263,7 @@ These aren't in Homebrew or need manual install:
 - [Wispr Flow](https://wispr.com) — voice-to-text (2025 pick)
 - [SuperWhisper](https://superwhisper.com) — voice-to-text (2024 pick, still good)
 - [Screenflow 11](https://www.telestream.net/screenflow/) — screen recording
+- [Tella.tv](https://www.tella.tv/) — screen recording; preferred replacement for Loom
 - [App Quitter](https://appquitter.com) — close apps when windows close
 - [Clipbook](https://clipbook.app) or Alfred — clipboard manager
 

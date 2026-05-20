@@ -23,7 +23,7 @@ chmod +x ./*.sh
 ./02-shell-setup.sh          # Oh-My-ZSH + plugins + fonts
 ./03-brew-packages.sh        # All brew formulae + cask apps
 ./04-dev-environment.sh      # Node (fnm), Python (uv), Git, Docker
-./05-ai-tools.sh             # Claude Code, Ollama models, llama.cpp
+./05-ai-tools.sh             # Claude Code, Antigravity CLI, Ollama models, llama.cpp
 ./06-dotfiles.sh             # .zshrc with all config
 ./07-macos-settings.sh       # System preferences automation
 ```
@@ -42,7 +42,7 @@ chmod +x ./*.sh
 | Browser | Kagi Orion | Arc Browser |
 | Voice | SuperWhisper | Wispr Flow |
 | Editor | Cursor | Cursor + Windsurf |
-| AI Terminal | Claude Code | Claude Code + Gemini CLI |
+| AI Terminal | Claude Code | Claude Code + Antigravity CLI |
 | Python | uv (new) | uv (confirmed) |
 | Docker | Colima | Colima (+ watching Podman) |
 | Terminal | Warp | Ghostty + cmux |
@@ -99,7 +99,7 @@ After running the scripts:
 
 - **Vertical tabs** — organize sessions horizontally
 - **Split panes** — divide terminal into layouts
-- **Socket API** — control cmux from other applications (perfect for AI agents integrating with Claude Code or Gemini CLI)
+- **Socket API** — control cmux from other applications (perfect for AI agents integrating with Claude Code or Antigravity CLI)
 - **Reads Ghostty config** — shares configuration with your terminal
 
 ### Ghostty Config

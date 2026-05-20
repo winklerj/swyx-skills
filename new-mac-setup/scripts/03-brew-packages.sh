@@ -60,6 +60,7 @@ FORMULAE=(
     flyctl          # Fly.io CLI
     entr            # File watcher
     tig             # Git TUI
+    googleworkspace-cli  # Google Workspace CLI (provides gws)
 
     # Mac App Store CLI
     mas             # Install App Store apps from CLI
@@ -120,11 +121,12 @@ CASKS=(
 
     # AI & ML
     ollama
+    antigravity      # Google Antigravity app + agy CLI
 
     # Media
     vlc
     audacity
-    loom
+    tella           # Screen recorder; preferred replacement for Loom
     descript
 
     # Utilities
@@ -139,6 +141,7 @@ CASKS=(
     # Dev tools
     beeper           # Unified messaging
     superhuman       # Email
+    gcloud-cli       # Google Cloud CLI (provides gcloud)
 
     # Claude-suggested additions
     orbstack            # Lighter Docker alternative (even lighter than Colima)

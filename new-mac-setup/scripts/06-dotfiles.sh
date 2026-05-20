@@ -230,6 +230,7 @@ please() {
 
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="/opt/homebrew/bin:$PATH"
+export PATH="/opt/homebrew/share/google-cloud-sdk/bin:$PATH"
 
 # Editor preferences
 export EDITOR="cursor"
