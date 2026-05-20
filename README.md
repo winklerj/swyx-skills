@@ -1,16 +1,45 @@
-This repo contains reusable skills for Claude Code, Codex, Cursor, and similar agent environments.
+# swyxio Skills
 
-Each skill is a self-contained workflow with a `SKILL.md`, supporting scripts when needed, and a focused problem statement so an agent can pick the right tool quickly.
+Reusable skills for Claude Code, Codex, Cursor, and similar agent environments.
 
-## Skills
+Each folder is a self-contained workflow with a `SKILL.md`, optional supporting scripts, and a focused trigger description so an agent can pick the right tool quickly.
 
-- [new-mac-setup](./new-mac-setup) — opinionated Apple Silicon Mac bootstrap for fullstack and AI work. Installs Homebrew, shell tooling, editors, local AI tools, terminal setup, and macOS defaults in a repeatable run order.
-- [download-video](./download-video) — downloads embedded or private video players from web pages by resolving the real player URL and calling `yt-dlp` with the right referer/origin headers.
-- [youtube-api](./youtube-api) — programmatic YouTube channel management via the YouTube Data API v3. Handles OAuth setup, custom thumbnail uploads, metadata updates, and listing channel videos without relying on YouTube Studio's browser UI.
-- [transcribe-anything](./transcribe-anything) — speech-to-text for audio and video files using pluggable ASR backends (whisper, whisperX, faster-whisper, OpenAI, Groq, Deepgram, AssemblyAI, Gemini). Handles 1-8+ hour files with silence skipping, optional speaker diarization, and custom vocabulary.
-- [multimodal-extraction](./multimodal-extraction) — turns a local video or video URL into a Markdown timeline with slide screenshots, key frames, and transcript spans aligned by timestamp. Reuses video download, thumbnail extraction, audio preprocessing, and Whisper transcription in one speed-first workflow.
-- [summarize-anything](./summarize-anything) — recursive map-reduce summarization for text of any length (1k-1M words) with pluggable LLM backends (OpenRouter, Ollama, OpenAI, Anthropic, Gemini). 17 output formats including YouTube descriptions/chapters, tweets, titles, thumbnail prompts, blog outlines, and pull quotes. Supports focus directives to steer emphasis.
-- [claude-session-introspect](./claude-session-introspect) — pull real telemetry from Claude Code session JSONL files at `~/.claude/projects/`. Token totals (input/output/cache reads/writes), assistant turn count, human prompt count, tool-call breakdown, and compaction boundaries. Comes with a `stats.sh` one-shot.
-- [smart-entity-resolution](./smart-entity-resolution) — resolve named people or organizations in messy databases with aliases, duplicates, sparse records, common names, LLM retrieval repair, reranking, and visible runner-up candidates.
+## Skill Index
+
+### Coding, Agents, And Workstations
+
+- [codebase-maintainability-guardrails](./codebase-maintainability-guardrails) — guardrails for substantial coding work, especially frontend/fullstack apps, production refactors, UI migrations, and greenfield builds. Keeps files small, typed, feature-owned, contract-driven, behavior-preserving, and visually verified.
+- [new-mac-setup](./new-mac-setup) — opinionated Apple Silicon Mac bootstrap for fullstack and AI work. Installs Homebrew, shell tooling, editors, AI tools, terminal setup, and macOS defaults in a repeatable run order.
+- [claude-session-introspect](./claude-session-introspect) — inspects Claude Code session JSONL files at `~/.claude/projects/` for token totals, prompt counts, assistant turns, tool calls, compaction boundaries, and compaction summaries.
+- [smart-entity-resolution](./smart-entity-resolution) — resolves named people or organizations in messy databases with aliases, duplicates, sparse records, common names, LLM retrieval repair, reranking, and visible runner-up candidates.
+
+### Media Download And Transformation
+
+- [media-transform](./media-transform) — orchestrates video pipelines across download, upload, transcription, chapters, thumbnails, and title testing by routing to the right atomic skill for each stage.
+- [download-video](./download-video) — downloads embedded videos from web pages by resolving the real player URL and calling `yt-dlp` with the right referer/origin headers.
+- [download-x-video](./download-x-video) — downloads X/Twitter post videos with `yt-dlp`, including HLS streams and reliable final-path detection.
+- [zoom-download](./zoom-download) — downloads Zoom cloud recordings, verifies filenames/file types, and supports ffmpeg-based content analysis.
+
+### Transcription, Extraction, And Summarization
+
+- [transcribe-anything](./transcribe-anything) — transcribes audio and video files using pluggable ASR backends including local Whisper, whisperX, faster-whisper, OpenAI, Groq, Deepgram, AssemblyAI, Gemini, and Hugging Face models.
+- [conference-transcribe](./conference-transcribe) — splits long conference livestreams or YouTube videos into per-talk transcripts using chapter timestamps, segment transcription, and LLM cleanup.
+- [multimodal-extraction](./multimodal-extraction) — turns local videos or video URLs into Markdown timelines with slide screenshots, key frames, and transcript spans aligned by timestamp.
+- [summarize-anything](./summarize-anything) — recursively summarizes long text with pluggable LLM backends and can emit executive summaries, YouTube descriptions, chapters, posts, titles, thumbnail prompts, blog outlines, and pull quotes.
+- [podcast-publishing-assistant](./podcast-publishing-assistant) — turns podcasts, interviews, panels, and long-form audio/video into transcripts, summaries, chapter markers, show notes, titles, descriptions, and promo copy.
+
+### YouTube Publishing And Thumbnails
+
+- [youtube-api](./youtube-api) — manages YouTube videos programmatically through the YouTube Data API v3, including uploads, thumbnails, metadata updates, and channel video listing.
+- [youtube-publish](./youtube-publish) — publishes videos on YouTube, edits titles/descriptions/timestamps, assigns playlists, and manages YouTube Studio metadata workflows.
+- [youtube-thumbnails](./youtube-thumbnails) — creates AI-generated YouTube thumbnails with prompt engineering, image generation, compression, and upload guidance.
+- [thumbnail-extraction](./thumbnail-extraction) — extracts interesting video frames, face crops, presentation slides, and transparent cutouts for thumbnail compositing.
+
+## Repo Shape
+
+- One skill per top-level folder.
+- Every skill must include `SKILL.md`.
+- Add scripts only when they make the workflow more reliable or repeatable.
+- Keep auxiliary docs minimal; the skill body should carry the agent-facing workflow.
 
 Click into each folder for the detailed workflow, prerequisites, and command examples.
