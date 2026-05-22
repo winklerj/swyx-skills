@@ -12,11 +12,17 @@ Each folder is a self-contained workflow with a `SKILL.md`, optional supporting 
 
 ### Coding, Agents, And Workstations
 
-Codebase quality progression:
+#### Kakuna Codebase Hardening Suite
+
+<img src="./assets/kakuna-codebase-hardening.png" alt="Kakuna Codebase Hardening Suite logo: a cute armored cocoon mascot inside a code shield" width="160" align="right">
+
+Use these three skills as a progression: first prevent new slop, then harden the existing codebase as-is, then add broader product-readiness services.
 
 - [codebase-maintainability-guardrails](./codebase-maintainability-guardrails) — always-on coding standards for substantial app work. Use this as the baseline rulebook for small, typed, feature-owned, contract-driven, behavior-preserving, visually verified changes.
 - [antislop-codebase](./antislop-codebase) — a structured maintainability migration for messy or prototype repos as they already are. Use this when the repo needs staged refactors, concurrent workers, better tests, smaller files, clearer module boundaries, and a final migration audit microsite.
 - [productionize-app-with-services](./productionize-app-with-services) — a broader product-readiness expansion after the codebase is coherent enough to operate. Use this for observability, audit trails, role-aware permissions, API keys, REST/OpenAPI/agent docs, PostHog instrumentation, feature flags, admin UX, deploy smokes, and a final audit microsite.
+
+<br clear="right">
 
 Other coding/workstation skills:
 
