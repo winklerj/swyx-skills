@@ -1,9 +1,9 @@
 ---
-name: maintainability-migration
-description: Analyze and transform messy, prototype, overgrown, or hard-to-maintain software repositories into maintainable product-shaped codebases while preserving existing product behavior. Use when the user asks for a maintainability migration, codebase cleanup, refactor plan, modernization, TypeScript/type-boundary migration, test hardening, large-file reduction, architecture cleanup, subagent-driven refactor, or final migration audit/report/microsite. Do not use for broader production-readiness specialties such as security audits, observability/logging programs, compliance hardening, SRE/runbook work, or reliability engineering unless the user explicitly scopes those as part of the maintainability refactor.
+name: antislop-codebase
+description: Analyze and transform messy, prototype, overgrown, slop-prone, or hard-to-maintain software repositories into maintainable product-shaped codebases while preserving existing product behavior. Use when the user asks to antislop a codebase, clean up a messy repo, run a maintainability migration, write a refactor plan, modernize structure, improve TypeScript/type boundaries, harden tests, reduce large files, clean architecture, coordinate subagent-driven refactors, or produce a final migration audit/report/microsite. Do not use for broader production-readiness specialties such as security audits, observability/logging programs, compliance hardening, SRE/runbook work, or reliability engineering unless the user explicitly scopes those as part of the maintainability refactor.
 ---
 
-# Maintainability Migration
+# Antislop Codebase
 
 Use this skill to move a repo from "works but hurts" to a product-shaped cluster of small, typed, tested, maintainable modules while keeping the current product essentially as-is. Treat this as the first maintainability/productization pass, not the broader production-readiness program.
 
@@ -102,7 +102,7 @@ Use [audit-microsite.md](references/audit-microsite.md) for metrics, structure, 
 
 ## Quality Bar
 
-A successful maintainability migration has:
+A successful antislop migration has:
 
 - No giant ownership-free files in hot paths.
 - Clear feature/provider/domain folders.
