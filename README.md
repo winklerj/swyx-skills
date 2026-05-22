@@ -9,6 +9,7 @@ Each folder is a self-contained workflow with a `SKILL.md`, optional supporting 
 ### Coding, Agents, And Workstations
 
 - [codebase-maintainability-guardrails](./codebase-maintainability-guardrails) — guardrails for substantial coding work, especially frontend/fullstack apps, production refactors, UI migrations, and greenfield builds. Keeps files small, typed, feature-owned, contract-driven, behavior-preserving, and visually verified.
+- [maintainability-migration](./maintainability-migration) — runs a behavior-preserving maintainability migration for messy or prototype codebases: analyze repo needs, plan staged refactors, use concurrent workers safely, validate in green slices, and finish with a migration audit microsite.
 - [new-mac-setup](./new-mac-setup) — opinionated Apple Silicon Mac bootstrap for fullstack and AI work. Installs Homebrew, shell tooling, editors, AI tools, terminal setup, and macOS defaults in a repeatable run order.
 - [claude-session-introspect](./claude-session-introspect) — inspects Claude Code session JSONL files at `~/.claude/projects/` for token totals, prompt counts, assistant turns, tool calls, compaction boundaries, and compaction summaries.
 - [smart-entity-resolution](./smart-entity-resolution) — resolves named people or organizations in messy databases with aliases, duplicates, sparse records, common names, LLM retrieval repair, reranking, and visible runner-up candidates.
