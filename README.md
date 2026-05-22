@@ -12,25 +12,37 @@ Each folder is a self-contained workflow with a `SKILL.md`, optional supporting 
 
 Use these skills as a hardening progression: prevent new slop, harden the existing codebase as-is, add product services, then tighten safety, operability, and quality gates.
 
-<img src="./assets/kakuna-codebase-hardening.png" alt="Kakuna Codebase Hardening Suite logo: a cute armored cocoon mascot inside a code shield" height="250" align="left">
-
-<div> 
-  
-- **Foundation**
-  - [codebase-maintainability-guardrails](./codebase-maintainability-guardrails) — **Default engineering standards.** Always-on rules for small, typed, feature-owned, contract-driven, behavior-preserving, visually verified app work.
-  - [antislop-codebase](./antislop-codebase) — **Structural cleanup/migration.** Staged refactors for messy or prototype repos as they already are, with concurrent workers, better tests, smaller files, clearer module boundaries, and a final migration audit microsite.
-- **Productization**
-  - [productionize-app-with-services](./productionize-app-with-services) — **Operational/product hardening.** Adds product services after the codebase is coherent enough to operate: audit trails, role-aware permissions, API keys, REST/OpenAPI/agent docs, PostHog instrumentation, feature flags, admin UX, deploy smokes, and a final audit microsite.
-- **Safety**
-  - [security-hardening](./security-hardening) — **Practical appsec pass.** Reviews auth/session risk, secrets, dependency exposure, SSRF/uploads, CORS/CSRF, rate limits, input validation, unsafe logging, permission bypasses, and security headers.
-- **Operability**
-  - [observability-hardening](./observability-hardening) — **Production visibility.** Adds privacy-safe structured logs, error classes, request IDs, traces, metrics, dashboards, alert thresholds, user-visible operation status, and debug paths.
-  - [release-readiness-hardening](./release-readiness-hardening) — **Safe ship gates.** Defines env validation, deploy checklist, smoke tests, rollback path, feature flags, migration checks, production verification, and post-deploy monitoring.
-- **Quality**
-  - [test-strategy-hardening](./test-strategy-hardening) — **Trustworthy tests.** Audits whether tests carry their weight, then hardens flaky tests, contract tests, golden-path e2e, regression fixtures, runtime, dedupe, and coverage quality.
-
-</div>
-
+<table>
+  <tr>
+    <td width="280" align="center" valign="middle">
+      <img src="./assets/kakuna-codebase-hardening.png" alt="Kakuna Codebase Hardening Suite logo: a cute armored cocoon mascot inside a code shield" width="240">
+    </td>
+    <td valign="middle">
+      <p><strong>Foundation</strong></p>
+      <ul>
+        <li><a href="./codebase-maintainability-guardrails">codebase-maintainability-guardrails</a> — <strong>Default engineering standards.</strong> Always-on rules for small, typed, feature-owned, contract-driven, behavior-preserving, visually verified app work.</li>
+        <li><a href="./antislop-codebase">antislop-codebase</a> — <strong>Structural cleanup/migration.</strong> Staged refactors for messy or prototype repos as they already are, with concurrent workers, better tests, smaller files, clearer module boundaries, and a final migration audit microsite.</li>
+      </ul>
+      <p><strong>Productization</strong></p>
+      <ul>
+        <li><a href="./productionize-app-with-services">productionize-app-with-services</a> — <strong>Operational/product hardening.</strong> Adds product services after the codebase is coherent enough to operate: audit trails, role-aware permissions, API keys, REST/OpenAPI/agent docs, PostHog instrumentation, feature flags, admin UX, deploy smokes, and a final audit microsite.</li>
+      </ul>
+      <p><strong>Safety</strong></p>
+      <ul>
+        <li><a href="./security-hardening">security-hardening</a> — <strong>Practical appsec pass.</strong> Reviews auth/session risk, secrets, dependency exposure, SSRF/uploads, CORS/CSRF, rate limits, input validation, unsafe logging, permission bypasses, and security headers.</li>
+      </ul>
+      <p><strong>Operability</strong></p>
+      <ul>
+        <li><a href="./observability-hardening">observability-hardening</a> — <strong>Production visibility.</strong> Adds privacy-safe structured logs, error classes, request IDs, traces, metrics, dashboards, alert thresholds, user-visible operation status, and debug paths.</li>
+        <li><a href="./release-readiness-hardening">release-readiness-hardening</a> — <strong>Safe ship gates.</strong> Defines env validation, deploy checklist, smoke tests, rollback path, feature flags, migration checks, production verification, and post-deploy monitoring.</li>
+      </ul>
+      <p><strong>Quality</strong></p>
+      <ul>
+        <li><a href="./test-strategy-hardening">test-strategy-hardening</a> — <strong>Trustworthy tests.</strong> Audits whether tests carry their weight, then hardens flaky tests, contract tests, golden-path e2e, regression fixtures, runtime, dedupe, and coverage quality.</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 #### Other coding/workstation skills
 
