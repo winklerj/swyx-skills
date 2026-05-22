@@ -6,14 +6,9 @@ Each folder is a self-contained workflow with a `SKILL.md`, optional supporting 
 
 ## Skill Index
 
-### Basics
-
-- [new-mac-setup](./new-mac-setup) — opinionated Apple Silicon Mac bootstrap for fullstack and AI work. Installs Homebrew, shell tooling, editors, AI tools, terminal setup, and macOS defaults in a repeatable run order.
-
 ### Coding, Agents, And Workstations
 
 #### Kakuna Codebase Hardening Suite
-
 
 Use these three skills as a progression: first prevent new slop, then harden the existing codebase as-is, then add broader product-readiness services.
 
@@ -27,8 +22,9 @@ Use these three skills as a progression: first prevent new slop, then harden the
 
 </div>
 
-Other coding/workstation skills:
+#### Other coding/workstation skills
 
+- [new-mac-setup](./new-mac-setup) — opinionated Apple Silicon Mac bootstrap for fullstack and AI work. Installs Homebrew, shell tooling, editors, AI tools, terminal setup, and macOS defaults in a repeatable run order.
 - [claude-session-introspect](./claude-session-introspect) — inspects Claude Code session JSONL files at `~/.claude/projects/` for token totals, prompt counts, assistant turns, tool calls, compaction boundaries, and compaction summaries.
 - [smart-entity-resolution](./smart-entity-resolution) — resolves named people or organizations in messy databases with aliases, duplicates, sparse records, common names, LLM retrieval repair, reranking, and visible runner-up candidates.
 
