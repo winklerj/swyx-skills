@@ -12,9 +12,14 @@ Each folder is a self-contained workflow with a `SKILL.md`, optional supporting 
 
 ### Coding, Agents, And Workstations
 
-- [codebase-maintainability-guardrails](./codebase-maintainability-guardrails) — guardrails for substantial coding work, especially frontend/fullstack apps, production refactors, UI migrations, and greenfield builds. Keeps files small, typed, feature-owned, contract-driven, behavior-preserving, and visually verified.
-- [antislop-codebase](./antislop-codebase) — turns messy or prototype codebases into maintainable, product-shaped systems as-is: analyze repo needs, plan staged refactors, use concurrent workers safely, validate in green slices, and finish with a migration audit microsite.
-- [productionize-app-with-services](./productionize-app-with-services) — takes a working demo/prototype to a production-shaped product with observability, audit trails, role-aware permissions, API keys, REST/OpenAPI/agent docs, PostHog instrumentation, feature flags, admin UX, deploy smokes, and a final audit microsite.
+Codebase quality progression:
+
+- [codebase-maintainability-guardrails](./codebase-maintainability-guardrails) — always-on coding standards for substantial app work. Use this as the baseline rulebook for small, typed, feature-owned, contract-driven, behavior-preserving, visually verified changes.
+- [antislop-codebase](./antislop-codebase) — a structured maintainability migration for messy or prototype repos as they already are. Use this when the repo needs staged refactors, concurrent workers, better tests, smaller files, clearer module boundaries, and a final migration audit microsite.
+- [productionize-app-with-services](./productionize-app-with-services) — a broader product-readiness expansion after the codebase is coherent enough to operate. Use this for observability, audit trails, role-aware permissions, API keys, REST/OpenAPI/agent docs, PostHog instrumentation, feature flags, admin UX, deploy smokes, and a final audit microsite.
+
+Other coding/workstation skills:
+
 - [claude-session-introspect](./claude-session-introspect) — inspects Claude Code session JSONL files at `~/.claude/projects/` for token totals, prompt counts, assistant turns, tool calls, compaction boundaries, and compaction summaries.
 - [smart-entity-resolution](./smart-entity-resolution) — resolves named people or organizations in messy databases with aliases, duplicates, sparse records, common names, LLM retrieval repair, reranking, and visible runner-up candidates.
 

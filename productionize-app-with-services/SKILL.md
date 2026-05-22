@@ -7,7 +7,7 @@ description: Transform a working demo/prototype codebase into a production-shape
 
 Use this skill when a codebase already "works" but needs to become a durable product. The job is not just cleanup; it is to make the system understandable, operable, inspectable, secure by default, API-first where useful, and friendly to future human and AI maintainers.
 
-This skill is broader than maintainability refactoring. If the task is only structural cleanup, use `maintainability-migration`; if the task includes product readiness, observability, audit, security, API surfaces, admin UX, and deploy validation, use this skill.
+This skill is broader than maintainability refactoring. If the task is only structural cleanup, use `antislop-codebase`; if the task includes product readiness, observability, audit, security, API surfaces, admin UX, and deploy validation, use this skill.
 
 ## Default Stack
 
