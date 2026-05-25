@@ -312,7 +312,7 @@ Format each under a clear heading.
 **For individual high-quality outputs** (better for long/complex inputs):
 Make a separate LLM call for each format using the format-specific prompts below.
 
----
+***
 
 ## Output Catalog
 
@@ -644,7 +644,7 @@ Timestamped chapter markers (first must be 0:00).
 ${FOCUS_DIRECTIVE}"
 ```
 
----
+***
 
 ## Focus Directives
 
@@ -669,7 +669,7 @@ FOCUS: Write for a non-technical audience.
 
 If no focus directive is given, omit it entirely (don't say "no specific focus"). The LLM will produce a balanced summary.
 
----
+***
 
 ## Practical Examples
 
@@ -742,7 +742,7 @@ call_openai_compatible \
   8192 > content_package.md
 ```
 
----
+***
 
 ## Troubleshooting
 

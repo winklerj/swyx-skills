@@ -1,6 +1,7 @@
 ---
 name: codebase-maintainability-guardrails
-description: Use for most substantial coding work, especially frontend/fullstack apps, greenfield apps built from scratch, production refactors, UI migrations, and feature work where Codex should preserve maintainable code style: small typed feature-owned files, thin entrypoints, pure domain logic, centralized contracts, behavior-preserving refactors, protected persisted state, feature-owned CSS/Tailwind, focused tests, and real viewport visual QA.
+description: |
+  Use for most substantial coding work, especially frontend/fullstack apps, greenfield apps built from scratch, production refactors, UI migrations, and feature work where Codex should preserve maintainable code style: small typed feature-owned files, thin entrypoints, pure domain logic, centralized contracts, behavior-preserving refactors, protected persisted state, feature-owned CSS/Tailwind, focused tests, and real viewport visual QA.
 ---
 
 # Codebase Maintainability Guardrails

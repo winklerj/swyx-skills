@@ -493,7 +493,7 @@ The user's default preference is **markdown-formatted plain text**. Convert the 
 **Backend:** {backend}
 **Model:** {model}
 
----
+***
 
 ## [00:00:00]
 
@@ -503,7 +503,7 @@ The user's default preference is **markdown-formatted plain text**. Convert the 
 
 {text continues with periodic timestamp headers...}
 
----
+***
 
 *Transcribed with {backend} ({model})*
 ```
@@ -512,7 +512,7 @@ The user's default preference is **markdown-formatted plain text**. Convert the 
 - Insert `## [HH:MM:SS]` timestamp headers every 2-5 minutes (not every segment — that's too noisy)
 - Group consecutive segments by the same speaker into paragraphs
 - If diarization is available, prefix with bold speaker labels: `**Speaker 1:** text...`
-- Use `---` horizontal rules at major topic shifts or long pauses (>10s)
+- Use `***` horizontal rules at major topic shifts or long pauses (>10s)
 - Keep paragraph breaks at natural sentence boundaries
 
 #### With speaker diarization:
@@ -523,7 +523,7 @@ The user's default preference is **markdown-formatted plain text**. Convert the 
 **Speakers:** 3 detected
 **Duration:** 1h 23m
 
----
+***
 
 ## [00:00:00]
 
