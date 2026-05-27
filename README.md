@@ -57,6 +57,10 @@ Use these skills as a hardening progression: prevent new slop, harden the existi
 - [download-x-video](./download-x-video) — downloads X/Twitter post videos with `yt-dlp`, including HLS streams and reliable final-path detection.
 - [zoom-download](./zoom-download) — downloads Zoom cloud recordings, verifies filenames/file types, and supports ffmpeg-based content analysis.
 
+### Web And Social Scraping
+
+- [twitter-x-scraping](./twitter-x-scraping) — scrapes public Twitter/X profile and list timelines through Nitter-compatible mirror HTML, with cursor pagination, raw JSON persistence, and anti-bot fallback guidance. Does not treat public mirrors as a reliable source for a user's following graph.
+
 ### Transcription, Extraction, And Summarization
 
 - [transcribe-anything](./transcribe-anything) — transcribes audio and video files using pluggable ASR backends including local Whisper, whisperX, faster-whisper, OpenAI, Groq, Deepgram, AssemblyAI, Gemini, and Hugging Face models.
