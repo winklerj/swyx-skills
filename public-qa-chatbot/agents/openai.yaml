@@ -1,0 +1,4 @@
+interface:
+  display_name: "Public QA Chatbot"
+  short_description: "Build safe public FAQ chat widgets"
+  default_prompt: "Use $public-qa-chatbot to build or review an unauthenticated public Q&A chatbot with rate limits, safe streaming UX, caching, observability, and robust chat scrolling."
