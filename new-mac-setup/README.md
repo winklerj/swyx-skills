@@ -46,6 +46,7 @@ chmod +x ./*.sh
 | Python | uv (new) | uv (confirmed) |
 | Docker | Colima | Colima (+ watching Podman) |
 | Terminal | Warp | Ghostty + cmux |
+| Screenshots | Shottr | Shottr + Screendrop |
 
 ## Browser Extensions to Install Manually
 
@@ -87,6 +88,7 @@ After running the scripts:
 - [Wispr Flow](https://wispr.com) — voice-to-text (2025 pick)
 - [SuperWhisper](https://superwhisper.com) — voice-to-text (2024 pick, still good)
 - [Windsurf](https://windsurf.com/download/editor) — AI code editor
+- [Screendrop](https://github.com/fayazara/Screendrop) — local-first screenshots, screen recordings, annotation, capture history, and optional Cloudflare-backed sharing; recommended alongside Shottr
 - [Screenflow 11](https://www.telestream.net/screenflow/) — screen recording
 - [App Quitter](https://appquitter.com) — close apps when windows close
 - [Clipbook](https://clipbook.app) or Alfred — clipboard manager

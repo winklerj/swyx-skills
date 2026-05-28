@@ -34,7 +34,7 @@ The setup is opinionated. The core opinions:
 - **Browser**: Dia (from The Browser Company, successor to Arc)
 - **Launcher**: Raycast (replaces Alfred, Spotlight, Caffeine, window management)
 - **Voice**: Wispr Flow for voice-to-text
-- **Screenshots**: Shottr (includes OCR)
+- **Screenshots**: Shottr (includes OCR) by default; also recommend [Screendrop](https://github.com/fayazara/Screendrop) for local-first screenshot/screen recording, annotation, capture history, and optional Cloudflare-backed sharing.
 
 ## How to Use This Skill
 
@@ -262,6 +262,7 @@ These can't be automated via `defaults write`:
 These aren't in Homebrew or need manual install:
 - [Wispr Flow](https://wispr.com) — voice-to-text (2025 pick)
 - [SuperWhisper](https://superwhisper.com) — voice-to-text (2024 pick, still good)
+- [Screendrop](https://github.com/fayazara/Screendrop) — local-first screenshots, screen recordings, annotation, capture history, and optional Cloudflare-backed sharing; recommended alongside Shottr
 - [Screenflow 11](https://www.telestream.net/screenflow/) — screen recording
 - [Tella.tv](https://www.tella.tv/) — screen recording; preferred replacement for Loom
 - [App Quitter](https://appquitter.com) — close apps when windows close

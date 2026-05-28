@@ -1,206 +1,411 @@
 ---
 name: twitter-x-scraping
-description: Scrape Twitter/X timelines, lists, or profiles via Nitter-compatible mirror HTML without the official API. Use for Twitter/X scraping, Nitter or xcancel.com scraping, tweet collection, cursor pagination, anti-bot challenge handling, and scrape-to-summary pipelines.
+description: Use when scraping public Twitter/X timelines or lists through Nitter-style mirrors with axios and Playwright fallback, including anti-bot challenge handling and pagination limits.
 ---
 
-# Twitter/X Scraping
+# Skill: Scraping Nitter.net for Tweets
 
-Scrape public Twitter/X timeline HTML through Nitter-compatible mirrors when the task needs public tweets and does not require the official X API.
+This codebase scrapes [nitter.net](https://nitter.net) — an open-source Twitter frontend — to collect tweets from a list or profile within a time window. The technique works without a Twitter API key.
 
-## Scope
+## Core Methodology
 
-Use this skill for:
+### 1. URL Structure
 
-- Profile timelines, such as `/swyx`
-- Public X list timelines, such as `/i/lists/<listId>`
-- Tweet collection, filtering, raw JSON persistence, and downstream summaries
-- Debugging Nitter-compatible markup, cursors, timestamps, stats, media, and anti-bot handling
+Nitter mirrors Twitter's URL layout:
 
-Do not use this as a drop-in replacement for `GET /2/users/:id/following`.
+| Target | Nitter path |
+|--------|------------|
+| Twitter List | `/i/lists/<listId>` |
+| User Profile | `/<handle>` |
+| Paginated | append `?cursor=<cursor>` |
 
-Public Nitter-compatible mirrors are not a reliable source for a user's following or follower graph. Upstream Nitter profile tabs cover timelines such as tweets, replies, media, and search, but not a stable `/<handle>/following` or `/<handle>/followers` account-list route. Some mirrors may expose list members at `/i/lists/<listId>/members`, but that is an X List membership surface, not the accounts a user follows.
+### 2. Fetch Strategy: axios → Playwright fallback
 
-If the workflow needs a following graph, prefer one of:
-
-- Official X API following endpoints
-- A user-supplied export or maintained account list
-- A known X List ID whose members are acceptable as the source set
-- A self-hosted/custom fetcher with explicit support for the account graph
-
-## Default Approach
-
-Treat this as mirror-HTML scraping, not direct `x.com` automation.
-
-Preferred stack:
-
-- Fetch pages with HTTP first, using `fetch`, `axios`, `curl`, or equivalent.
-- Parse server-rendered HTML with Cheerio, BeautifulSoup, DOMParser, or equivalent.
-- Fall back to one persistent headed browser session only when the mirror returns an anti-bot challenge.
-- Save raw scrape JSON before any summarization, enrichment, or Notion/database writes.
-
-Known mirror patterns:
-
-- Profile timeline: `/<handle>`
-- List timeline: `/i/lists/<listId>`
-- List members, when supported by the mirror: `/i/lists/<listId>/members`
-- Pagination: append `?cursor=<cursor>`
-- Common fallback mirror: `https://xcancel.com` when `https://nitter.net` is unavailable
-
-Preserve list IDs and tweet IDs as strings. They can exceed safe integer precision.
-
-## Scraping Workflow
-
-1. Resolve the target:
-   - Numeric input usually means `list`.
-   - `@handle` or non-numeric input usually means `profile`.
-   - Allow an explicit `type` override.
-   - Treat `following` and `followers` targets as unsupported unless the implementation has a verified, current source for that specific graph.
-
-2. Resolve the time window:
-   - Default to the last 24 hours.
-   - Accept ISO timestamps and relative offsets like `3d`, `12h`, or `90m`.
-   - Include tweets at or after `start`.
-   - Skip tweets newer than `end`.
-
-3. Fetch each page:
-   - Use browser-like headers: `User-Agent`, `Accept`, `Accept-Language`, and `Accept-Encoding`.
-   - Retry `429`, `502`, and `503` with exponential backoff.
-   - Honor `Retry-After` and `X-Rate-Limit-Reset` headers when present.
-   - Cap retries and page count.
-   - Log the fetched URL, status, byte length, and whether a challenge marker was present.
-
-4. Parse tweets from each page:
-   - Load HTML into a DOM parser.
-   - Select `.timeline .timeline-item` and filter for items containing `.tweet-body`.
-   - Extract tweet ID and source URL from `a.tweet-link[href]` using `/status/(\\d+)/`.
-   - Extract timestamp from `.tweet-date a[title]`; normalize bullets/dots before `Date` parsing.
-   - Extract text from `.tweet-content.media-body`.
-   - Extract author from `.tweet-header a.username[title]` and `.tweet-header a.fullname[title]`.
-   - Extract stats from `.tweet-stats .tweet-stat` by icon class: comment, retweet, quote, heart, and play.
-   - Extract media from `.attachments`, `.gallery-video`, and card links.
-   - Extract retweets from `.retweet-header`.
-   - Extract quoted tweets from `.quote`.
-
-5. Stop pagination:
-   - Read the next cursor from `div.show-more a[href]`, falling back to any `a[href*="?cursor="]`.
-   - Stop if there is no next cursor.
-   - Stop once the newest relevant non-retweet on a page is older than `start`.
-   - Do not let old retweets alone force an early stop; they can appear out of chronological order.
-
-6. Persist output:
-   - Sort collected tweets by timestamp.
-   - Save `tweets` plus `diagnostics` to JSON before downstream work.
-   - Include `baseUrl`, page count, byte count, tweet count, effective window, earliest/latest timestamps, duration, and partial/error flags.
-
-## Anti-Bot Handling
-
-Detect mirror challenge pages by checking the status code and HTML for strings such as:
-
-- `Verifying your request`
-- `Verifying your browser`
-- `Making sure you're not a bot`
-- `Anubis`
-
-When detected, switch the rest of the run to one persistent headed browser session.
-
-Browser fallback guidance:
-
-- Use real system Chrome when available.
-- Use headed mode; headless often fails these challenges.
-- Reuse the same browser/page for all later pages.
-- Wait for `.timeline-item` or for the challenge marker to disappear.
-- Close or release the browser session at the end of the scrape.
-
-Do not relaunch a browser per page. It is slower, noisier, and more likely to trigger blocking.
-
-Do not solve CAPTCHAs or bypass explicit browser safety barriers. Proof-of-work pages that complete automatically in a normal browser are acceptable; interactive CAPTCHA or account-login walls are a blocker.
-
-## Failure Behavior
-
-Scrapers should preserve useful partial work.
-
-- If page 1 fails, throw a clear error because there is no data to save.
-- If a later page fails, return collected tweets with `diagnostics.wasPartial = true` and `diagnostics.errorMessage`.
-- Save partial scrape JSON and allow downstream summarization or reprocessing.
-- Support a resume mode that accepts raw scrape JSON and skips scraping.
-- Reject summary JSON as resume input unless it contains raw tweets.
-
-## Debugging Checklist
-
-When a scrape breaks, narrow to the most likely one or two causes before changing code:
-
-- Mirror is down, rate-limiting, or has changed markup.
-- Anti-bot challenge was served and HTTP-only fetching parsed the challenge page.
-- Cursor extraction failed, causing only the first page to be scraped.
-- Timestamp parsing failed due to locale or title format changes.
-- Date-stop logic stopped early because retweets or pinned content distorted ordering.
-- Selector drift caused zero tweet items or empty text/stats.
-- CLI args were misparsed, especially `--json`, extra `--`, `--type`, or shell-expanded globs.
-- The requested route is not supported by Nitter-compatible mirrors, especially `/<handle>/following` and `/<handle>/followers`.
-
-Add validation logs before implementing a fix:
-
-- Effective target type, identifier, base URL, start, and end
-- Fetched URL, status, byte length, and challenge marker
-- Number of timeline items and tweet-body items per page
-- Date ranges for all tweets, non-retweets, and kept tweets
-- Next cursor presence, without printing the full cursor unless needed
-- Partial status and last error
-
-## Output Model
-
-Use a stable tweet shape:
+Start with plain HTTP (`axios`). If nitter serves an anti-bot challenge page (detected by the string `"Verifying your request"` in the HTML), permanently switch to a headed Playwright/Chrome session for the rest of the run.
 
 ```ts
-interface Tweet {
-  id: string;
-  url: string;
-  user: {
-    username: string;
-    displayName: string;
-    profileUrl?: string;
-    avatarUrl?: string;
-  };
-  timestamp: string;
-  timestampMs: number;
-  text: string;
-  attachments: Array<{
-    type: 'image' | 'video' | 'card' | 'unknown';
-    previewUrl: string;
-    fullUrl?: string;
-    alt?: string;
-  }>;
-  stats: {
-    replies: number;
-    retweets: number;
-    quotes: number;
-    likes: number;
-    plays?: number;
-  };
-  retweetedBy?: string;
-  quoted?: unknown;
-  isThread?: boolean;
+// challengeSolver.ts — detect challenge
+const CHALLENGE_MARKER = 'Verifying your request';
+export function isChallengePage(html: string): boolean {
+  return html.includes(CHALLENGE_MARKER);
+}
+
+// scrapeNitterList.ts — switch modes on detection
+if (isChallengePage(html)) {
+  useBrowserMode = true;
+  const browserHtml = await fetchWithBrowser(url, debug);
+  return { html: browserHtml, url };
 }
 ```
 
-When producing summaries, rewrite Nitter mirror links to `x.com` or `twitter.com`, but keep raw scrape JSON faithful to the source URL and base mirror used.
+### 3. Browser Anti-bot Bypass
 
-## Implementation Notes
+When challenge is detected, launch a real system Chrome (not headless) with automation signals suppressed:
 
-- Keep scrape-only behavior independent from LLM summarization credentials.
-- Add mock HTML mode for repeatable tests using `page1.html`, `page2.html`, and similar fixtures.
-- Put a `maxPages` safety cap on every live scrape.
-- Add a character budget only as a downstream or pipeline stop condition; do not silently discard raw scraped tweets unless the user requested it.
-- Be polite with delays and retry cadence. Public mirrors are fragile community infrastructure.
-- Check target site terms and local policy before scraping at scale.
+```ts
+import { chromium } from 'playwright';
 
-## Current Mirror Notes
+const browser = await chromium.launch({
+  channel: 'chrome',
+  headless: false,
+  args: ['--disable-blink-features=AutomationControlled'],
+});
 
-As of 2026-05-27, checks against public mirrors showed:
+const context = await browser.newContext({ locale: 'en-US' });
+await context.addInitScript(() => {
+  Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+});
 
-- `https://xcancel.com/swyx` can render a profile timeline after the browser completes proof-of-work.
-- `https://xcancel.com/swyx/following` and `https://xcancel.com/swyx/followers` render `Page not found` after proof-of-work.
-- HTTP-only fetches to xcancel commonly return `503` verification pages.
-- Some Nitter mirrors return empty bodies or Anubis/proof-of-work pages.
+const page = await context.newPage();
+await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-Treat these observations as drift-prone diagnostics, not permanent guarantees. Recheck live mirror behavior before relying on a route.
+// Wait for challenge to auto-resolve
+await page.waitForSelector('.timeline-item', { timeout: 30000 });
+const html = await page.content();
+```
+
+**Key**: reuse a single browser/page instance across all subsequent fetches (singleton pattern) — don't re-launch per page.
+
+### 4. Retry Logic with Backoff
+
+For HTTP 429 / 502 / 503, retry up to 10 times with exponential backoff (2s base, max 60s), respecting `Retry-After` and `X-Rate-Limit-Reset` headers:
+
+```ts
+const maxRetries = 10;
+const baseDelayMs = 2000;
+
+for (let attempt = 0; attempt <= maxRetries; attempt++) {
+  const res = await axios.get(url, {
+    headers: FETCH_HEADERS,
+    timeout: 30000,
+    validateStatus: (s) => (s >= 200 && s < 400) || s === 429 || s === 502 || s === 503,
+  });
+
+  if (res.status === 429 || res.status === 502 || res.status === 503) {
+    const ra = res.headers['retry-after'];
+    if (ra && /^\d+$/.test(ra)) {
+      await sleep(Math.min((parseInt(ra) + 2) * 1000, 5 * 60 * 1000));
+      continue;
+    }
+    const jitter = Math.floor(Math.random() * 250);
+    const waitMs = Math.min(baseDelayMs * Math.pow(2, attempt) + jitter, 60_000);
+    await sleep(waitMs);
+    continue;
+  }
+
+  if (res.status === 200) return res.data;
+}
+```
+
+Use a browser-like User-Agent header:
+```ts
+const FETCH_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (compatible; MyBot/1.0) Node.js',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Accept': 'text/html,application/xhtml+xml',
+  'Accept-Encoding': 'gzip, compress, deflate, br',
+};
+```
+
+### 5. HTML Parsing with Cheerio
+
+Nitter renders server-side HTML. Parse it with `cheerio` (jQuery-like API):
+
+```ts
+import * as cheerio from 'cheerio';
+
+const $ = cheerio.load(html);
+
+// All tweets on the page
+const $items = $('.timeline .timeline-item').filter((_, el) =>
+  $(el).find('.tweet-body').length > 0
+);
+
+$items.each((_, el) => {
+  const $el = $(el);
+
+  // Tweet URL and ID
+  const href = $el.find('a.tweet-link').first().attr('href'); // e.g. "/user/status/12345"
+  const id = href?.match(/status\/(\d+)/)?.[1];
+
+  // Timestamp — from the `title` attribute of the date link
+  const title = $el.find('.tweet-date a').attr('title'); // e.g. "Apr 15, 2026 · 10:00 AM UTC"
+  const timestamp = new Date(title?.replace(/\s*[·•]\s*/g, ' ') ?? '');
+
+  // Tweet text
+  const text = $el.find('.tweet-content.media-body').text().trim();
+
+  // Author
+  const username = $el.find('.tweet-header a.username').attr('title');
+  const displayName = $el.find('.tweet-header a.fullname').attr('title');
+
+  // Images
+  $el.find('.attachments .attachment.image').each((_, img) => {
+    const src = $(img).find('img').attr('src');  // relative URL
+    const fullSrc = `https://nitter.net${src}`;
+  });
+
+  // Engagement stats
+  $el.find('.tweet-stats .tweet-stat').each((_, stat) => {
+    const icon = $(stat).find('.icon-container > span').attr('class') ?? '';
+    const n = parseInt($(stat).text().replace(/\D/g, '') || '0');
+    if (icon.includes('icon-heart')) console.log('likes:', n);
+    if (icon.includes('icon-retweet')) console.log('retweets:', n);
+  });
+
+  // Is a retweet?
+  const retweetedBy = $el.find('.retweet-header').text().trim() || undefined;
+
+  // Quoted tweet
+  const $quote = $el.find('.quote').first();
+  if ($quote.length) {
+    const quoteText = $quote.find('.quote-text').text().trim();
+    const quoteUser = $quote.find('.tweet-name-row a.username').text().trim();
+  }
+});
+```
+
+### 6. Cursor-Based Pagination
+
+Nitter exposes a "show more" link with a `?cursor=` param:
+
+```ts
+function findNextCursor($: cheerio.CheerioAPI): string | undefined {
+  const href = $('div.show-more a').last().attr('href') ?? '';
+  const m = href.match(/[?&]cursor=([^&]+)/);
+  return m ? decodeURIComponent(m[1]) : undefined;
+}
+
+// In the pagination loop:
+let cursor: string | undefined;
+while (pagesFetched < maxPages) {
+  const url = `https://nitter.net/i/lists/${listId}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`;
+  const html = await fetchPage(url);
+  const $ = cheerio.load(html);
+  // ... parse tweets ...
+  const next = findNextCursor($);
+  if (!next) break;
+  cursor = next;
+}
+```
+
+### 7. Date-Bounded Stopping
+
+Stop pagination as soon as the oldest non-retweet on a page is older than `startDate`, avoiding unnecessary fetches:
+
+```ts
+// After parsing all tweets on a page:
+const oldestNonRTMs = Math.min(
+  ...pageTweets.filter(t => !t.retweetedBy).map(t => t.timestampMs)
+);
+
+if (oldestNonRTMs < startDate.getTime()) {
+  console.log('Reached tweets older than start date; stopping.');
+  break;
+}
+```
+
+***
+
+## Quick-Start: Minimal End-to-End Example
+
+```ts
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+
+const LIST_ID = '1585430245762441216';
+const BASE = 'https://nitter.net';
+const HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (compatible; MyBot/1.0) Node.js',
+  'Accept': 'text/html,application/xhtml+xml',
+};
+
+async function scrapeListPage(cursor?: string) {
+  const url = `${BASE}/i/lists/${LIST_ID}${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`;
+  const res = await axios.get(url, { headers: HEADERS, timeout: 30000 });
+  const $ = cheerio.load(res.data);
+
+  const tweets: { id: string; text: string; timestamp: string }[] = [];
+
+  $('.timeline .timeline-item').filter((_, el) =>
+    $(el).find('.tweet-body').length > 0
+  ).each((_, el) => {
+    const $el = $(el);
+    const href = $el.find('a.tweet-link').first().attr('href') ?? '';
+    const id = href.match(/status\/(\d+)/)?.[1] ?? href;
+    const title = $el.find('.tweet-date a').attr('title') ?? '';
+    const timestamp = new Date(title.replace(/\s*[·•]\s*/g, ' ')).toISOString();
+    const text = $el.find('.tweet-content.media-body').text().trim();
+    tweets.push({ id, text, timestamp });
+  });
+
+  const nextHref = $('div.show-more a').last().attr('href') ?? '';
+  const nextCursor = nextHref.match(/[?&]cursor=([^&]+)/)?.[1];
+
+  return { tweets, nextCursor: nextCursor ? decodeURIComponent(nextCursor) : undefined };
+}
+
+async function main() {
+  let cursor: string | undefined;
+  let allTweets: { id: string; text: string; timestamp: string }[] = [];
+
+  for (let page = 0; page < 5; page++) {
+    const { tweets, nextCursor } = await scrapeListPage(cursor);
+    allTweets.push(...tweets);
+    console.log(`Page ${page + 1}: +${tweets.length} tweets (${allTweets.length} total)`);
+    if (!nextCursor) break;
+    cursor = nextCursor;
+    await new Promise(r => setTimeout(r, 1000)); // polite delay
+  }
+
+  console.log(JSON.stringify(allTweets, null, 2));
+}
+
+main();
+```
+
+***
+
+## Empirical Findings (Apr 2026)
+
+### Instance Selection
+
+`nitter.net` itself is often up but **headless Playwright returns "Oh noes!" (rate-limited/blocked)**. Always use `headless: false` or `channel: 'chrome'`. Working instances confirmed Apr 15 2026:
+
+| Instance | Status |
+|----------|--------|
+| `nitter.tiekoetter.com` | ✅ reliable, used successfully |
+| `nitter.privacyredirect.com` | ⚠️ TLS timeout |
+| `nitter.catsarch.com` | ✅ listed as up |
+| `xcancel.com` | ✅ listed as up |
+| `nitter.net` | ✅ up but may block headless |
+
+Check live status at: **https://status.d420.de/**
+
+Build a priority list and auto-fallback. Accept an instance as valid only after `.timeline-item` is found in DOM, not just by page title:
+
+```ts
+const ok = await page.waitForSelector('.timeline-item', { timeout: 10000 })
+  .then(() => true).catch(() => false);
+// Don't trust page.title() — error pages can spoof it
+```
+
+### Headless Always Fails
+
+Nitter instances actively detect headless Chromium and return a blank/error page. **Always use `headless: false`** (or `channel: 'chrome'` which implies headed). The `--disable-blink-features=AutomationControlled` arg and `navigator.webdriver` override are also necessary:
+
+```ts
+const browser = await chromium.launch({
+  headless: false, // REQUIRED — headless gets blocked
+  args: ['--disable-blink-features=AutomationControlled'],
+});
+await context.addInitScript(() => {
+  Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+});
+```
+
+### Pagination: Cursor URL Construction
+
+The `div.show-more a` href is a **relative URL** like `?cursor=DAA...`. Do NOT construct `baseUrl + href` naively — the correct form is:
+
+```ts
+// ✅ correct
+const nextUrl = `${baseUrl}/${handle}${nextHref}`; // nextHref starts with "?"
+
+// ❌ wrong — this double-encodes or drops the path
+const nextUrl = new URL(nextHref, baseUrl).href;
+```
+
+Verify by logging the constructed URL before `page.goto()`.
+
+### Timestamp Parsing
+
+The `.tweet-date a` element has two useful attributes:
+- `title` — **full absolute date**: `"Apr 14, 2026 · 5:47 PM UTC"` — always use this for cutoff comparisons
+- `textContent` — **relative display**: `"19h"` or `"Apr 14"` — unreliable for parsing
+
+The `·` separator is a Unicode middle dot (`\u00B7`), not ASCII. Split on it:
+
+```ts
+const datePart = title.split('·')[0].trim(); // "Apr 14, 2026 "
+const date = new Date(datePart); // reliable
+```
+
+Do not try to parse `"19h"` — if `title` is missing, skip or don't cutoff on that tweet.
+
+### Pinned Posts
+
+The first `.timeline-item` is often a **pinned post** that can be years old, causing a false early cutoff. Skip it:
+
+```ts
+const isPinned = item.classList.contains('pinned') ||
+  !!item.querySelector('.pinned-icon, .icon-pin');
+if (isPinned) continue;
+```
+
+Also: check the **oldest non-pinned** tweet's date for the cutoff, not just the oldest tweet.
+
+### Avatar Scraping (No Auth)
+
+The CSS selector reference lists `.tweet-header a.tweet-avatar img.avatar[src]` — **use this instead of unavatar.io** to get avatars directly from Nitter without a third-party service:
+
+```ts
+const avatarSrc = $el.find('.tweet-header a.tweet-avatar img.avatar').attr('src');
+// Returns a relative path like /pic/pbs.twimg.com%2F...
+// Decode it:
+const avatarUrl = avatarSrc
+  ? 'https://pbs.twimg.com/' + decodeURIComponent(avatarSrc.replace('/pic/', '').replace('pbs.twimg.com%2F', ''))
+  : undefined;
+```
+
+Or just store the Nitter-proxied URL: `${instance}${avatarSrc}` (will break if instance changes).
+
+**Avoid `unavatar.io/twitter/<handle>`** — it 301-redirects to `/x/<handle>` and has a low anonymous daily rate limit (hits quickly when backfilling many users). Use it only as a fallback when Nitter avatar is unavailable.
+
+### Tweet Author URL Points to Original on Retweets
+
+On a retweet, `a.tweet-link href` points to **the original author's tweet** (e.g. `/originalAuthor/status/123`), not `/@swyx/status/...`. This is what you want for linking to the source. Extract the author from the href:
+
+```ts
+const authorMatch = href.match(/^\/([^/]+)\/status/);
+const author = authorMatch?.[1]; // original author's handle
+```
+
+***
+
+## Dependencies
+
+```json
+{
+  "axios": "^1.7.2",
+  "cheerio": "^1.0.0",
+  "playwright": "^1.58.2"
+}
+```
+
+Install Playwright browsers once: `npx playwright install chrome`
+
+***
+
+## CSS Selector Reference
+
+| Data | Selector |
+|------|----------|
+| Tweet container | `.timeline .timeline-item` (filter: has `.tweet-body`) |
+| Tweet link / ID | `a.tweet-link[href]` → extract `/status/(\d+)/` |
+| Timestamp | `.tweet-date a[title]` |
+| Tweet text | `.tweet-content.media-body` |
+| Author username | `.tweet-header a.username[title]` |
+| Author display name | `.tweet-header a.fullname[title]` |
+| Avatar | `.tweet-header a.tweet-avatar img.avatar[src]` |
+| Images | `.attachments .attachment.image img[src]` |
+| Videos | `.attachments .gallery-video img[src]` (poster) |
+| Link card | `.card a.card-container[href]` |
+| Likes | `.tweet-stat span.icon-heart` → sibling text |
+| Retweets | `.tweet-stat span.icon-retweet` → sibling text |
+| Replies | `.tweet-stat span.icon-comment` → sibling text |
+| Quote tweets | `.tweet-stat span.icon-quote` → sibling text |
+| Retweet banner | `.retweet-header` (non-empty = is a retweet) |
+| Quoted tweet block | `.quote` |
+| Quoted text | `.quote .quote-text` |
+| Next page cursor | `div.show-more a[href]` → extract `?cursor=` |
